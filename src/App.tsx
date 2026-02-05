@@ -2,16 +2,18 @@ import { useState, useEffect } from 'react';
 import { listen } from '@tauri-apps/api/event';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard/Dashboard';
+import { Overlay } from './components/Overlay';
 import { useTaskStore } from './store/taskStore';
 
 function App() {
   const [inputValue, setInputValue] = useState("");
+  const [isOverlayOpen, setIsOverlayOpen] = useState(false);
   const { quickCapture } = useTaskStore();
 
   useEffect(() => {
     const unlisten = listen('quick-capture-triggered', () => {
       console.log('Quick capture triggered!');
-      // TODO: Open overlay or focus input
+      setIsOverlayOpen(true);
     });
     return () => {
       unlisten.then(f => f());
@@ -28,6 +30,11 @@ function App() {
 
   return (
     <Layout>
+      <Overlay 
+        isOpen={isOverlayOpen} 
+        onClose={() => setIsOverlayOpen(false)} 
+      />
+      
       <div className="mb-8">
         <form onSubmit={handleCapture} className="w-full">
           <input
@@ -36,7 +43,6 @@ function App() {
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="What needs to be done? (Press Enter)"
             className="w-full bg-white border border-stone-300 text-stone-900 text-lg rounded-xl px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-shadow"
-            autoFocus
           />
         </form>
       </div>
