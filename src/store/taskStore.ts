@@ -13,6 +13,7 @@ interface TaskState {
   completeTask: (id: string) => Promise<void>;
   deferTask: (id: string) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  startTask: (id: string) => Promise<void>;
 }
 
 export const useTaskStore = create<TaskState>((set) => ({
@@ -34,6 +35,16 @@ export const useTaskStore = create<TaskState>((set) => ({
     try {
       await invoke('quick_capture', { title });
       // Refresh dashboard after capture
+      const data = await invoke<DashboardData>('get_dashboard_data');
+      set({ dashboard: data });
+    } catch (error) {
+      set({ error: String(error) });
+    }
+  },
+
+  startTask: async (id: string) => {
+    try {
+      await invoke('update_task_status', { id, status: 'now' });
       const data = await invoke<DashboardData>('get_dashboard_data');
       set({ dashboard: data });
     } catch (error) {
