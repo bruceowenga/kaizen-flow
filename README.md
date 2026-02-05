@@ -226,7 +226,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 💬 Contact
 
 **Author:** Bruce Mbudi  
-**Email:** [Your Email]  
+**Email:** bruceowenga@gmail.com
+**Blog:** blog.brucembudi.dev
 **GitHub:** [@brucembudi](https://github.com/brucembudi)
 
 ---
