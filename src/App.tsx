@@ -1,50 +1,37 @@
-import { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { invoke } from "@tauri-apps/api/core";
-import "./App.css";
+import { useState } from 'react';
+import { Layout } from './components/Layout';
+import { Dashboard } from './components/Dashboard/Dashboard';
+import { useTaskStore } from './store/taskStore';
 
 function App() {
-  const [greetMsg, setGreetMsg] = useState("");
-  const [name, setName] = useState("");
+  const [inputValue, setInputValue] = useState("");
+  const { quickCapture } = useTaskStore();
 
-  async function greet() {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    setGreetMsg(await invoke("greet", { name }));
-  }
+  const handleCapture = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    
+    await quickCapture(inputValue);
+    setInputValue("");
+  };
 
   return (
-    <main className="container">
-      <h1>Welcome to Tauri + React</h1>
-
-      <div className="row">
-        <a href="https://vite.dev" target="_blank">
-          <img src="/vite.svg" className="logo vite" alt="Vite logo" />
-        </a>
-        <a href="https://tauri.app" target="_blank">
-          <img src="/tauri.svg" className="logo tauri" alt="Tauri logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <Layout>
+      <div className="mb-8">
+        <form onSubmit={handleCapture} className="w-full">
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="What needs to be done? (Press Enter)"
+            className="w-full bg-white border border-stone-300 text-stone-900 text-lg rounded-xl px-4 py-3 shadow-sm focus:outline-none focus:ring-2 focus:ring-stone-500 focus:border-transparent transition-shadow"
+            autoFocus
+          />
+        </form>
       </div>
-      <p>Click on the Tauri, Vite, and React logos to learn more.</p>
 
-      <form
-        className="row"
-        onSubmit={(e) => {
-          e.preventDefault();
-          greet();
-        }}
-      >
-        <input
-          id="greet-input"
-          onChange={(e) => setName(e.currentTarget.value)}
-          placeholder="Enter a name..."
-        />
-        <button type="submit">Greet</button>
-      </form>
-      <p>{greetMsg}</p>
-    </main>
+      <Dashboard />
+    </Layout>
   );
 }
 
