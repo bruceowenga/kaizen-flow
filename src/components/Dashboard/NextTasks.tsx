@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Task } from '../../types';
 import { useTaskStore } from '../../store/taskStore';
+import { ConfirmationDialog } from '../ConfirmationDialog';
 
 interface NextTasksProps {
   tasks: Task[];
@@ -8,6 +10,22 @@ interface NextTasksProps {
 
 export function NextTasks({ tasks, hasNowTask }: NextTasksProps) {
   const { startTask } = useTaskStore();
+  const [taskToStart, setTaskToStart] = useState<string | null>(null);
+
+  const handleStartClick = (taskId: string) => {
+    if (hasNowTask) {
+      setTaskToStart(taskId);
+    } else {
+      startTask(taskId);
+    }
+  };
+
+  const confirmStart = () => {
+    if (taskToStart) {
+      startTask(taskToStart);
+      setTaskToStart(null);
+    }
+  };
 
   return (
     <section>
@@ -30,14 +48,12 @@ export function NextTasks({ tasks, hasNowTask }: NextTasksProps) {
                 </div>
               </div>
               
-              {!hasNowTask && (
-                <button 
-                  onClick={() => startTask(task.id)}
-                  className="opacity-0 group-hover:opacity-100 bg-stone-800 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-stone-700 transition-all transform translate-x-2 group-hover:translate-x-0"
-                >
-                  Start
-                </button>
-              )}
+              <button 
+                onClick={() => handleStartClick(task.id)}
+                className="opacity-0 group-hover:opacity-100 bg-stone-800 text-white px-3 py-1.5 rounded-md text-xs font-bold hover:bg-stone-700 transition-all transform translate-x-2 group-hover:translate-x-0"
+              >
+                Start
+              </button>
             </div>
           ))
         ) : (
@@ -46,6 +62,15 @@ export function NextTasks({ tasks, hasNowTask }: NextTasksProps) {
           </div>
         )}
       </div>
+
+      <ConfirmationDialog
+        isOpen={!!taskToStart}
+        title="Switch Active Task?"
+        message="This will move your current NOW task back to the Next list. Are you sure you want to switch focus?"
+        confirmLabel="Switch Task"
+        onConfirm={confirmStart}
+        onCancel={() => setTaskToStart(null)}
+      />
     </section>
   );
 }
