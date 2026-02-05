@@ -1,6 +1,6 @@
 use crate::{
     db::{DashboardData, Task, TaskStatus},
-    AppState,
+    nlp, AppState,
 };
 use tauri::State;
 
@@ -8,13 +8,15 @@ use tauri::State;
 pub fn quick_capture(title: String, state: State<AppState>) -> Result<Task, String> {
     let db = state.db.lock().map_err(|e| e.to_string())?;
 
+    let parsed = nlp::parse_task_input(&title);
+
     db.create_task(
-        title.clone(),
+        parsed.title,
         TaskStatus::Next,
-        None,
-        None,
+        parsed.context,
+        parsed.scheduled_for,
         Some(title),
-        "desktop_hotkey".to_string(),
+        "quick_capture".to_string(),
         None,
     )
     .map_err(|e| e.to_string())

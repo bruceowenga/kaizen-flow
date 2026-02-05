@@ -1,8 +1,9 @@
 mod commands;
 mod db;
+mod nlp;
 
 use std::sync::Mutex;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 
 pub struct AppState {
     pub db: Mutex<db::Database>,
@@ -13,7 +14,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
-                .with_shortcut("CommandOrControl+Shift+Space", |app, shortcut, event| {
+                .with_shortcut("CommandOrControl+Shift+Space")
+                .expect("Failed to register shortcut")
+                .with_handler(|app, shortcut, event| {
                     if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
                         if shortcut.matches(tauri_plugin_global_shortcut::Modifiers::SHIFT | tauri_plugin_global_shortcut::Modifiers::CONTROL | tauri_plugin_global_shortcut::Modifiers::SUPER, tauri_plugin_global_shortcut::Code::Space) ||
                            shortcut.matches(tauri_plugin_global_shortcut::Modifiers::SHIFT | tauri_plugin_global_shortcut::Modifiers::CONTROL, tauri_plugin_global_shortcut::Code::Space) {

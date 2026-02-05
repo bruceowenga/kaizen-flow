@@ -159,7 +159,7 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
+
     use tempfile::tempdir;
 
     fn setup_test_db() -> Database {
