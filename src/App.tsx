@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { listen } from '@tauri-apps/api/event';
 import { Layout } from './components/Layout';
 import { Dashboard } from './components/Dashboard/Dashboard';
 import { useTaskStore } from './store/taskStore';
@@ -6,6 +7,16 @@ import { useTaskStore } from './store/taskStore';
 function App() {
   const [inputValue, setInputValue] = useState("");
   const { quickCapture } = useTaskStore();
+
+  useEffect(() => {
+    const unlisten = listen('quick-capture-triggered', () => {
+      console.log('Quick capture triggered!');
+      // TODO: Open overlay or focus input
+    });
+    return () => {
+      unlisten.then(f => f());
+    };
+  }, []);
 
   const handleCapture = async (e: React.FormEvent) => {
     e.preventDefault();

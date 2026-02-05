@@ -1,10 +1,10 @@
 use anyhow::Result;
+use chrono::Utc;
 use rusqlite::{params, Row};
 use uuid::Uuid;
-use chrono::Utc;
 
 use super::connection::Database;
-use super::models::{Task, TaskStatus, DashboardData};
+use super::models::{DashboardData, Task, TaskStatus};
 
 impl Database {
     /// Create a new task
@@ -69,7 +69,8 @@ impl Database {
              FROM tasks WHERE status = 'next' ORDER BY created_at DESC LIMIT 10"
         )?;
 
-        let next_tasks = stmt.query_map([], |row| self.row_to_task(row))?
+        let next_tasks = stmt
+            .query_map([], |row| self.row_to_task(row))?
             .collect::<Result<Vec<_>, _>>()?;
 
         // Get WAITING tasks (limit 10)
@@ -78,21 +79,28 @@ impl Database {
              FROM tasks WHERE status = 'waiting' ORDER BY created_at DESC LIMIT 10"
         )?;
 
-        let waiting_tasks = stmt.query_map([], |row| self.row_to_task(row))?
+        let waiting_tasks = stmt
+            .query_map([], |row| self.row_to_task(row))?
             .collect::<Result<Vec<_>, _>>()?;
 
         // Calculate review due days
-        let last_review: i64 = self.conn().query_row(
-            "SELECT value FROM settings WHERE key = 'last_review_date'",
-            [],
-            |row| row.get(0),
-        ).unwrap_or(0);
+        let last_review: i64 = self
+            .conn()
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'last_review_date'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
 
-        let review_frequency: i64 = self.conn().query_row(
-            "SELECT value FROM settings WHERE key = 'review_frequency_days'",
-            [],
-            |row| row.get::<_, String>(0).map(|s| s.parse().unwrap_or(7)),
-        ).unwrap_or(7);
+        let review_frequency: i64 = self
+            .conn()
+            .query_row(
+                "SELECT value FROM settings WHERE key = 'review_frequency_days'",
+                [],
+                |row| row.get::<_, String>(0).map(|s| s.parse().unwrap_or(7)),
+            )
+            .unwrap_or(7);
 
         let now = Utc::now().timestamp();
         let days_since_review = (now - last_review) / 86400;
@@ -124,7 +132,8 @@ impl Database {
 
     /// Delete a task
     pub fn delete_task(&self, id: &str) -> Result<()> {
-        self.conn().execute("DELETE FROM tasks WHERE id = ?1", params![id])?;
+        self.conn()
+            .execute("DELETE FROM tasks WHERE id = ?1", params![id])?;
         Ok(())
     }
 
@@ -150,8 +159,8 @@ impl Database {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tempfile::tempdir;
     use std::path::PathBuf;
+    use tempfile::tempdir;
 
     fn setup_test_db() -> Database {
         let dir = tempdir().unwrap();
@@ -163,15 +172,17 @@ mod tests {
     fn test_create_and_get_task() {
         let db = setup_test_db();
 
-        let task = db.create_task(
-            "Test task".to_string(),
-            TaskStatus::Next,
-            None,
-            None,
-            None,
-            "test".to_string(),
-            None,
-        ).unwrap();
+        let task = db
+            .create_task(
+                "Test task".to_string(),
+                TaskStatus::Next,
+                None,
+                None,
+                None,
+                "test".to_string(),
+                None,
+            )
+            .unwrap();
 
         assert_eq!(task.title, "Test task");
         assert_eq!(task.status, TaskStatus::Next);
@@ -193,7 +204,8 @@ mod tests {
             None,
             "test".to_string(),
             None,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Create NEXT tasks
         db.create_task(
@@ -204,7 +216,8 @@ mod tests {
             None,
             "test".to_string(),
             None,
-        ).unwrap();
+        )
+        .unwrap();
 
         let dashboard = db.get_dashboard_data().unwrap();
 
@@ -218,26 +231,30 @@ mod tests {
         let db = setup_test_db();
 
         // Create first NOW task
-        let task1 = db.create_task(
-            "NOW task 1".to_string(),
-            TaskStatus::Now,
-            None,
-            None,
-            None,
-            "test".to_string(),
-            None,
-        ).unwrap();
+        let task1 = db
+            .create_task(
+                "NOW task 1".to_string(),
+                TaskStatus::Now,
+                None,
+                None,
+                None,
+                "test".to_string(),
+                None,
+            )
+            .unwrap();
 
         // Create second task as NEXT
-        let task2 = db.create_task(
-            "Task 2".to_string(),
-            TaskStatus::Next,
-            None,
-            None,
-            None,
-            "test".to_string(),
-            None,
-        ).unwrap();
+        let task2 = db
+            .create_task(
+                "Task 2".to_string(),
+                TaskStatus::Next,
+                None,
+                None,
+                None,
+                "test".to_string(),
+                None,
+            )
+            .unwrap();
 
         // Update task2 to NOW (should demote task1 to NEXT)
         db.update_task_status(&task2.id, TaskStatus::Now).unwrap();

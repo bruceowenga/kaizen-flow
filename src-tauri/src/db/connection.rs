@@ -1,7 +1,7 @@
 use anyhow::Result;
-use rusqlite::{Connection, params};
-use std::path::PathBuf;
+use rusqlite::{params, Connection};
 use std::fs;
+use std::path::PathBuf;
 
 pub struct Database {
     conn: Connection,
@@ -16,13 +16,13 @@ impl Database {
         }
 
         let conn = Connection::open(&db_path)?;
-        
+
         // Enable foreign keys
         conn.execute("PRAGMA foreign_keys = ON", [])?;
-        
+
         let mut db = Database { conn };
         db.run_migrations()?;
-        
+
         Ok(db)
     }
 
@@ -38,7 +38,8 @@ impl Database {
         )?;
 
         // Check current version
-        let current_version: i32 = self.conn
+        let current_version: i32 = self
+            .conn
             .query_row(
                 "SELECT COALESCE(MAX(version), 0) FROM migrations",
                 [],
@@ -50,12 +51,12 @@ impl Database {
         if current_version < 1 {
             let migration_sql = include_str!("../../migrations/001_initial_schema.sql");
             self.conn.execute_batch(migration_sql)?;
-            
+
             self.conn.execute(
                 "INSERT INTO migrations (version, applied_at) VALUES (?1, strftime('%s', 'now'))",
                 params![1],
             )?;
-            
+
             println!("Applied migration 001_initial_schema.sql");
         }
 
@@ -77,9 +78,9 @@ mod tests {
     fn test_database_initialization() {
         let dir = tempdir().unwrap();
         let db_path = dir.path().join("test.db");
-        
+
         let db = Database::new(db_path).unwrap();
-        
+
         // Verify tables exist
         let table_count: i32 = db.conn()
             .query_row(
@@ -88,7 +89,7 @@ mod tests {
                 |row| row.get(0),
             )
             .unwrap();
-        
+
         assert_eq!(table_count, 4);
     }
 
@@ -96,18 +97,15 @@ mod tests {
     fn test_migrations_applied() {
         let dir = tempdir().unwrap();
         let db_path = dir.path().join("test.db");
-        
+
         let db = Database::new(db_path).unwrap();
-        
+
         // Verify migration was applied
-        let version: i32 = db.conn()
-            .query_row(
-                "SELECT MAX(version) FROM migrations",
-                [],
-                |row| row.get(0),
-            )
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT MAX(version) FROM migrations", [], |row| row.get(0))
             .unwrap();
-        
+
         assert_eq!(version, 1);
     }
 }
